@@ -1,4 +1,6 @@
 #!/bin/bash
+# Markdownium Terminal Client
+# WebPath and URL parsing
 trap 'exec $0 sidebar' EXIT
 tput smcup
 clear
@@ -22,17 +24,53 @@ case "$WEBPATH" in
   *)
     ;;
 esac
-
+# config.json
 : "${CONFIGDOTJSON:=https://wiki.obsidianos.xyz/config.json}"
 URL="$(curl -fsSL $CONFIGDOTJSON | jq -r '.baseUrl')"
 LOGO="$(curl -fsSL $CONFIGDOTJSON | jq -r '.logo')"
 NAME="$(curl -fsSL $CONFIGDOTJSON | jq -r '.siteName')"
 WIDTH=${COLUMNS:-80};HEIGHT=${LINES:-24};BG=44;FG=97
+# styling
+format_text() {
+  sed -E '
+  # Replace %GAP% with |
+  s/%GAP%/|/g
+
+  # Markdown links: [text](url) -> text [url], no color
+  s/\[([^]]*)\]\(([^)]*)\)/\1 [\2]/g
+
+  # Headers: #, ##, ###, #### -> yellow
+  s/^(#{1,4}) (.*)/\x1b[33m\2\x1b[0m/
+
+  # Quote line: > -> grey
+  s/^> (.*)/\x1b[90m\1\x1b[0m/
+
+  # Bold: **text** (does not clear color)
+  s/\*\*([^*]+)\*\*/\x1b[1m\1\x1b[22m/g
+
+  # Italic: *text* (does not clear color)
+  s/\*([^*]+)\*/\x1b[3m\1\x1b[23m/g
+
+  # Inline code: `text` -> grey bg, white text
+  s/`([^`]+)`/\x1b[100;97m\1\x1b[0m/g
+
+  # Multiline fenced code blocks: ``` ... ```
+  # Match opening ``` anywhere in the line
+  /```/ {
+    :start
+    N
+    /```/! b start
+    s/```(.*\n)*```/\x1b[100;97m&\x1b[0m/g
+  }
+  '
+}
+# rendering
 echo;echo
 curl -fsSL "$LOGO"|kitten icat --align=left -n --use-window-size 50,50,50,50
 printf " $NAME | "
-curl -fsSL "$URL/top.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|sed 's/%GAP%/|/g'
-curl -fsSL "$URL/$WEBPATH.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|more
+curl -fsSL "$URL/top.md"|format_text
+curl -fsSL "$URL/$WEBPATH.md"|format_text|more
+# status bars
 printf "\033[${HEIGHT-2};1H"
 TEXT="odd mdium - $NAME - $WEBPATH"
 PAD=$((WIDTH - ${#TEXT}))
@@ -55,13 +93,14 @@ if [ "$WEBPATH" = "sidebar" ]; then
 fi
 PAD=$((WIDTH - ${#TEXT}))
 printf "\033[${BG}m\033[${FG}m%s%${PAD}s\033[0m\n" "$TEXT" ""
+# input parsing
 read input
 if [ "$input" == "##" ]; then
   clear
   if command -v most >/dev/null; then
-    curl -fsSL "$URL/$WEBPATH.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|most
+    curl -fsSL "$URL/$WEBPATH.md"|format_text|most
   elif command -v less >/dev/null; then
-    curl -fsSL "$URL/$WEBPATH.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|less
+    curl -fsSL "$URL/$WEBPATH.md"|format_text|less
   fi
   exec $0 $WEBPATH
 fi
