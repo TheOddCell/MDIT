@@ -1,5 +1,8 @@
 #!/bin/bash
 # Markdownium Terminal Client
+# this code is MIT licenced
+# by TheOddCell
+
 # WebPath and URL parsing
 trap 'exec $0 sidebar' EXIT
 tput smcup
