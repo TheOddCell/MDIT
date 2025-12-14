@@ -12,10 +12,12 @@ case "$WEBPATH" in
     trap '' EXIT
     tput rmcup
     echo "Error: Web URLs are not supported."
-    echo "Press ^C to exit or ^D to continue."
+    echo "Press ^C to exit or ^D to xdg-open it."
     echo "Perhaps you meant to set the CONFIGDOTJSON enviroment variable?"
     read errinput
-    exec $0
+    xdg-open "$WEBPATH"
+    WEBPATH="home"
+    tput smcup
     ;;
   *)
     ;;
@@ -35,11 +37,21 @@ printf "\033[${HEIGHT-2};1H"
 TEXT="odd mdium - $NAME - $WEBPATH"
 PAD=$((WIDTH - ${#TEXT}))
 printf "\033[${BG}m\033[${FG}m%s%${PAD}s\033[0m\n" "$TEXT" "" 
-TEXT="type path - ^C sidebar ^D reload - #q exit"
+TEXT="type path - ^C sidebar ^D reload ^C^C exit"
 if command -v less >/dev/null; then
-  TEXT="type path - ^C sidebar ^D exit - #q exit ## use less"
+  TEXT="type path - ^C sidebar ^D reload ^C^C exit ## use less"
 fi;if command -v most >/dev/null; then
-  TEXT="type path - ^C sidebar ^D reload - #q exit ## use most"
+  TEXT="type path - ^C sidebar ^D reload ^C^C exit ## use most"
+fi
+if [ "$WEBPATH" = "sidebar" ]; then 
+  trap '' EXIT
+  trap 'tput rmcup; exit 0' INT
+  TEXT="type path - ^C exit    ^D reload ^C^C exit"
+  if command -v less >/dev/null; then
+    TEXT="type path - ^C exit    ^D reload ^C^C exit ## use less"
+  fi;if command -v most >/dev/null; then
+    TEXT="type path - ^C exit    ^D reload ^C^C exit ## use most"
+  fi
 fi
 PAD=$((WIDTH - ${#TEXT}))
 printf "\033[${BG}m\033[${FG}m%s%${PAD}s\033[0m\n" "$TEXT" ""
@@ -52,11 +64,6 @@ if [ "$input" == "##" ]; then
     curl -fsSL "$URL/$WEBPATH.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|less
   fi
   exec $0 $WEBPATH
-fi
-if [ "$input" == "#q" ]; then
-  tput rmcup
-  trap '' EXIT
-  exit
 fi
 if [ -n "$input" ]; then
   clear
