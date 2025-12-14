@@ -1,2 +1,2 @@
-# odd mdium
-Terminal Markdownium Client
+# MDIT
+MarkDownIum Terminal client

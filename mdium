@@ -1,5 +1,5 @@
 #!/bin/bash
-# Markdownium Terminal Client
+# MarkDownIum Terminal client (MDIT)
 # this code is MIT licenced
 # by TheOddCell
 
@@ -75,14 +75,14 @@ curl -fsSL "$URL/top.md"|format_text
 curl -fsSL "$URL/$WEBPATH.md"|format_text|more
 # status bars
 printf "\033[${HEIGHT-2};1H"
-TEXT="odd mdium - $NAME - $WEBPATH"
+TEXT="MDIT - $NAME - $WEBPATH"
 PAD=$((WIDTH - ${#TEXT}))
 printf "\033[${BG}m\033[${FG}m%s%${PAD}s\033[0m\n" "$TEXT" "" 
-TEXT="type path - ^C sidebar ^D reload ^C^C exit"
+TEXT="^C sidebar ^D reload ^C^C exit, or type path."
 if command -v less >/dev/null; then
-  TEXT="type path - ^C sidebar ^D reload ^C^C exit ## use less"
-fi;if command -v most >/dev/null; then
-  TEXT="type path - ^C sidebar ^D reload ^C^C exit ## use most"
+  TEXT="^C sidebar ^D reload ^C^C exit ## use less, or type path"
+elif command -v most >/dev/null; then
+  TEXT="^C sidebar ^D reload ^C^C exit ## use most, or type path"
 fi
 if [ "$WEBPATH" = "sidebar" ]; then 
   trap '' EXIT
