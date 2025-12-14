@@ -32,10 +32,6 @@ format_text() {
   # Replace %GAP% with |
   s/%GAP%/|/g
 
-  # Special image/embed syntax: [!something](url)
-  # Replaced with: curl url | kitten icat --detect-support=no
-  s/\[!([^\]]+)\]\(([^)]+)\)/curl -fsSL "\2" | kitten icat --detect-support=no/e
-
   # Markdown links: [text](url) -> text [url], no color
   s/\[([^]]*)\]\(([^)]*)\)/\1 [\2]/g
 
@@ -57,7 +53,7 @@ format_text() {
 }
 # rendering
 echo;echo
-curl -fsSL "$LOGO"|kitten icat --align=left -n --use-window-size 50,50,50,50
+curl -fsSL "$LOGO"|kitten icat --align=left -n --use-window-size 50,50,50,50 --detection-timeout=0.1 2>/dev/null
 printf " $NAME | "
 curl -fsSL "$URL/top.md"|format_text
 curl -fsSL "$URL/$WEBPATH.md"|format_text|more
@@ -74,12 +70,12 @@ elif command -v most >/dev/null; then
 fi
 if [ "$WEBPATH" = "sidebar" ]; then 
   trap '' EXIT
-  trap 'tput rmcup; exit 0' INT
+  trap 'clear;tput rmcup; exit 0' INT
   TEXT="type path - ^C exit    ^D reload ^C^C exit"
-  if command -v less >/dev/null; then
-    TEXT="type path - ^C exit    ^D reload ^C^C exit ## use less"
-  fi;if command -v most >/dev/null; then
+  if command -v most >/dev/null; then
     TEXT="type path - ^C exit    ^D reload ^C^C exit ## use most"
+  fi;if command -v less >/dev/null; then
+    TEXT="type path - ^C exit    ^D reload ^C^C exit ## use less"
   fi
 fi
 PAD=$((WIDTH - ${#TEXT}))
