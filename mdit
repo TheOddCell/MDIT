@@ -14,15 +14,8 @@ if [ "$WEBPATH" == "/" ]; then
 fi
 case "$WEBPATH" in
   http://*|https://*)
-    trap '' EXIT
-    tput rmcup
-    echo "Error: Web URLs are not supported."
-    echo "Press ^C to exit or ^D to xdg-open it."
-    echo "Perhaps you meant to set the CONFIGDOTJSON enviroment variable?"
-    read errinput
     xdg-open "$WEBPATH"
     WEBPATH="home"
-    tput smcup
     ;;
   *)
     ;;
@@ -38,6 +31,10 @@ format_text() {
   sed -E '
   # Replace %GAP% with |
   s/%GAP%/|/g
+
+  # Special image/embed syntax: [!something](url)
+  # Replaced with: curl url | kitten icat --detect-support=no
+  s/\[!([^\]]+)\]\(([^)]+)\)/curl -fsSL "\2" | kitten icat --detect-support=no/e
 
   # Markdown links: [text](url) -> text [url], no color
   s/\[([^]]*)\]\(([^)]*)\)/\1 [\2]/g
@@ -56,15 +53,6 @@ format_text() {
 
   # Inline code: `text` -> grey bg, white text
   s/`([^`]+)`/\x1b[100;97m\1\x1b[0m/g
-
-  # Multiline fenced code blocks: ``` ... ```
-  # Match opening ``` anywhere in the line
-  /```/ {
-    :start
-    N
-    /```/! b start
-    s/```(.*\n)*```/\x1b[100;97m&\x1b[0m/g
-  }
   '
 }
 # rendering
