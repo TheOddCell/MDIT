@@ -25,6 +25,7 @@ esac
 URL="$(curl -fsSL $CONFIGDOTJSON | jq -r '.baseUrl')"
 LOGO="$(curl -fsSL $CONFIGDOTJSON | jq -r '.logo')"
 NAME="$(curl -fsSL $CONFIGDOTJSON | jq -r '.siteName')"
+LICENCE="$(curl -fsSL $CONFIGDOTJSON | jq -r '.licenseBadge')"
 WIDTH=${COLUMNS:-80};HEIGHT=${LINES:-24};BG=44;FG=97
 # styling
 format_text() {
@@ -52,14 +53,16 @@ format_text() {
   '
 }
 # rendering
-echo;echo
+echo;echo;echo
 curl -fsSL "$LOGO"|kitten icat --align=left -n --use-window-size 50,50,50,50 --detection-timeout=0.1 2>/dev/null
 printf " $NAME | "
 curl -fsSL "$URL/top.md"|format_text
 curl -fsSL "$URL/$WEBPATH.md"|format_text|more
 # status bars
 printf "\033[${HEIGHT-2};1H"
-TEXT="MDIT - $NAME - $WEBPATH"
+LICENCETEXT="$(printf '%s\n' "$LICENCE" \
+  | sed -n 's/.*alt="\([^"]*\)".*/ - \1/p')"
+TEXT="MDIT - $NAME - $WEBPATH$LICENCETEXT"
 PAD=$((WIDTH - ${#TEXT}))
 printf "\033[${BG}m\033[${FG}m%s%${PAD}s\033[0m\n" "$TEXT" "" 
 TEXT="^C sidebar ^D reload ^C^C exit, or type path."
