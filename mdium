@@ -1,0 +1,65 @@
+#!/bin/bash
+trap 'exec $0 sidebar' EXIT
+tput smcup
+clear
+WEBPATH="$1"
+: "${WEBPATH:=home}"
+if [ "$WEBPATH" == "/" ]; then
+  WEBPATH="/home"
+fi
+case "$WEBPATH" in
+  http://*|https://*)
+    trap '' EXIT
+    tput rmcup
+    echo "Error: Web URLs are not supported."
+    echo "Press ^C to exit or ^D to continue."
+    echo "Perhaps you meant to set the CONFIGDOTJSON enviroment variable?"
+    read errinput
+    exec $0
+    ;;
+  *)
+    ;;
+esac
+
+: "${CONFIGDOTJSON:=https://wiki.obsidianos.xyz/config.json}"
+URL="$(curl -fsSL $CONFIGDOTJSON | jq -r '.baseUrl')"
+LOGO="$(curl -fsSL $CONFIGDOTJSON | jq -r '.logo')"
+NAME="$(curl -fsSL $CONFIGDOTJSON | jq -r '.siteName')"
+WIDTH=${COLUMNS:-80};HEIGHT=${LINES:-24};BG=44;FG=97
+echo;echo
+curl -fsSL "$LOGO"|kitten icat --align=left -n --use-window-size 50,50,50,50
+printf " $NAME | "
+curl -fsSL "$URL/top.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|sed 's/%GAP%/|/g'
+curl -fsSL "$URL/$WEBPATH.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|more
+printf "\033[${HEIGHT-2};1H"
+TEXT="odd mdium - $NAME - $WEBPATH"
+PAD=$((WIDTH - ${#TEXT}))
+printf "\033[${BG}m\033[${FG}m%s%${PAD}s\033[0m\n" "$TEXT" "" 
+TEXT="type path - ^C sidebar ^D reload - #q exit"
+if command -v less >/dev/null; then
+  TEXT="type path - ^C sidebar ^D exit - #q exit ## use less"
+fi;if command -v most >/dev/null; then
+  TEXT="type path - ^C sidebar ^D reload - #q exit ## use most"
+fi
+PAD=$((WIDTH - ${#TEXT}))
+printf "\033[${BG}m\033[${FG}m%s%${PAD}s\033[0m\n" "$TEXT" ""
+read input
+if [ "$input" == "##" ]; then
+  clear
+  if command -v most >/dev/null; then
+    curl -fsSL "$URL/$WEBPATH.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|most
+  elif command -v less >/dev/null; then
+    curl -fsSL "$URL/$WEBPATH.md"|sed 's/\[\([^]]*\)\](\([^)]*\))/\1 [\2]/g'|less
+  fi
+  exec $0 $WEBPATH
+fi
+if [ "$input" == "#q" ]; then
+  tput rmcup
+  trap '' EXIT
+  exit
+fi
+if [ -n "$input" ]; then
+  clear
+  exec $0 "$input"
+fi
+exec $0 "$WEBPATH"
