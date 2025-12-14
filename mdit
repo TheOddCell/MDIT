@@ -63,19 +63,19 @@ TEXT="MDIT - $NAME - $WEBPATH"
 PAD=$((WIDTH - ${#TEXT}))
 printf "\033[${BG}m\033[${FG}m%s%${PAD}s\033[0m\n" "$TEXT" "" 
 TEXT="^C sidebar ^D reload ^C^C exit, or type path."
-if command -v less >/dev/null; then
-  TEXT="^C sidebar ^D reload ^C^C exit ## use less, or type path"
-elif command -v most >/dev/null; then
+if command -v most >/dev/null; then
   TEXT="^C sidebar ^D reload ^C^C exit ## use most, or type path"
+elif command -v less >/dev/null; then
+  TEXT="^C sidebar ^D reload ^C^C exit ## use less, or type path"
 fi
 if [ "$WEBPATH" = "sidebar" ]; then 
   trap '' EXIT
   trap 'clear;tput rmcup; exit 0' INT
-  TEXT="type path - ^C exit    ^D reload ^C^C exit"
+  TEXT="^C exit    ^D reload ^C^C exit, or type path"
   if command -v most >/dev/null; then
-    TEXT="type path - ^C exit    ^D reload ^C^C exit ## use most"
-  fi;if command -v less >/dev/null; then
-    TEXT="type path - ^C exit    ^D reload ^C^C exit ## use less"
+    TEXT="^C exit    ^D reload ^C^C exit ## use most, or type path"
+  elif command -v less >/dev/null; then
+    TEXT="^C exit    ^D reload ^C^C exit ## use less, or type path"
   fi
 fi
 PAD=$((WIDTH - ${#TEXT}))
