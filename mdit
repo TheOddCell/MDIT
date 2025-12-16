@@ -4,7 +4,9 @@
 # by TheOddCell
 
 # WebPath and URL parsing
-trap 'printf "\033[0m";clear;exec $0 sidebar' EXIT
+set -o pipefail
+trap 'printf "\033[0m";clear;exec $0 sidebar' INT
+trap 'printf "\033[0m";clear;exec $0 $WEBPATH --automore' TSTP
 tput smcup
 clear
 WEBPATH="$1"
@@ -42,8 +44,8 @@ format_text() {
   # Headers: #, ##, ###, #### -> yellow
   s/^(#{1,4}) (.*)/\x1b[33m\2\x1b[0m/
 
-  # Quote line: > -> grey
-  s/^> (.*)/\x1b[90m\1\x1b[0m/
+  # Quote line: "> " to "| "
+  s/^> /| /
 
   # Bold: **text** (does not clear color)
   s/\*\*([^*]+)\*\*/\x1b[1m\1\x1b[22m/g
@@ -56,37 +58,67 @@ format_text() {
   '
 }
 # top bar
-LICENCETEXT="$(printf '%s\n' "$LICENCE" \
-  | sed -n 's/.*alt="\([^"]*\)".*/ - \1/p')"
-if [ "$WEBPATH" = "/home" ]; then
-  WEBPATH2="/"
-else
-  WEBPATH2="$WEBPATH"
-fi
-TEXT="MDIT - [$NAME]$WEBPATH2$LICENCETEXT"
-PAD=$((WIDTH - ${#TEXT}))
+topbar() {
+  LICENCETEXT="$(printf '%s\n' "$LICENCE" \
+    | sed -n 's/.*alt="\([^"]*\)".*/ - \1/p')"
+  if [ "$WEBPATH" = "/home" ]; then
+    WEBPATH2="/"
+  else
+    WEBPATH2="$WEBPATH"
+  fi
+  TEXT2="$1"
+  if [ -z "$1"             ]; then TEXT2="MDIT - [+OK] - [$NAME]$WEBPATH2$LICENCETEXT";fi
+  if [    "$1" = "loading" ]; then TEXT2="MDIT - [...] - [$NAME]$WEBPATH2$LICENCETEXT";fi
+  if [    "$1" = "error"   ]; then TEXT2="MDIT - [!!!] - [$NAME]$WEBPATH2$LICENCETEXT";fi
+  PAD=$((WIDTH - ${#TEXT2}))
+  printf "\033[H\033[${BG}m\033[1;${FG}m%s%${PAD}s\033[0m\n" "$TEXT2" ""
+}
+topbar loading
 # rendering
-printf "\033[${BG}m\033[1;${FG}m%s%${PAD}s\033[0m\n" "$TEXT" ""
-curl -fsSL "$LOGO"|kitten icat --align=left -n --use-window-size 50,50,50,50 --detection-timeout=0.1 2>/dev/null
+also0="$0"
+moreable() {
+  if [ "$1" = "--automore" ]; then
+    if command -v most >/dev/null; then
+      most
+    elif command -v less >/dev/null; then
+      less --use-color
+    fi
+    tput smcup
+    clear
+    topbar
+    curl -fsSL "$LOGO" 2>/dev/null|kitten icat --align=left -n --use-window-size 50,50,50,50 --detection-timeout=0.1 2>/dev/null
+    printf " $NAME | "
+    curl -fsSL "$URL/top.md"|format_text
+    if [ "$?" != "0" ]; then topbar error; fi
+    curl -fsSL "$URL/$WEBPATH.md"|format_text
+    if [ "$?" != "0" ]; then topbar error; fi
+  else
+    more
+    printf "\033[H"
+    topbar
+  fi
+}
+curl -fsSL "$LOGO" 2>/dev/null|kitten icat --align=left -n --use-window-size 50,50,50,50 --detection-timeout=0.1 2>/dev/null
 printf " $NAME | "
 curl -fsSL "$URL/top.md"|format_text
-curl -fsSL "$URL/$WEBPATH.md"|format_text|more
+if [ "$?" != "0" ]; then topbar error; fi
+curl -fsSL "$URL/$WEBPATH.md"|format_text|moreable "$2"
+if [ "$?" != "0" ]; then topbar error; fi
 # help bar
 printf "\033[${HEIGHT};1H"
-TEXT="^C sidebar ^D reload ^C^C exit, or type path:"
+  TEXT="^C sidebar ^D reload ^C^C exit            , or type path:"
 if command -v most >/dev/null; then
-  TEXT="^C sidebar ^D reload ^C^C exit ## use most, or type path:"
+  TEXT="^C sidebar ^D reload ^C^C exit ^Z use most, or type path:"
 elif command -v less >/dev/null; then
-  TEXT="^C sidebar ^D reload ^C^C exit ## use less, or type path:"
+  TEXT="^C sidebar ^D reload ^C^C exit ^Z use less, or type path:"
 fi
 if [ "$WEBPATH" = "/sidebar" ]; then 
-  trap '' EXIT
   trap 'clear;tput rmcup; exit 0' INT
-  TEXT="^C exit    ^D reload          , or type path:"
+    TEXT="^C exit    ^D reload                      , or type path:"
   if command -v most >/dev/null; then
-    TEXT="^C exit    ^D reload           ## use most, or type path:"
+    TEXT="^C exit    ^D reload           ^Z use most, or type path:"
   elif command -v less >/dev/null; then
-    TEXT="^C exit    ^D reload           ## use less, or type path:"
+    TEXT="^C exit    ^D reload           ^Z use less, or type path:"
   fi
 fi
 PAD=$((WIDTH - ${#TEXT}))
@@ -97,14 +129,6 @@ printf "\033[${HEIGHT};${LENGTH}H"
 read input
 printf "\033[0m"
 clear
-if [ "$input" == "##" ]; then
-  if command -v most >/dev/null; then
-    curl -fsSL "$URL/$WEBPATH.md"|format_text|most
-  elif command -v less >/dev/null; then
-    curl -fsSL "$URL/$WEBPATH.md"|format_text|less
-  fi
-  exec $0 $WEBPATH
-fi
 if [ -n "$input" ]; then
   exec $0 "$input"
 fi
