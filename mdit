@@ -2,7 +2,7 @@
 # MarkDownIum Terminal client (MDIT)
 # this code is MIT licenced
 # by TheOddCell
-VERSION=1.0.1
+VERSION=1.0.2
 
 # WebPath and URL parsing
 set -o pipefail
@@ -68,9 +68,19 @@ topbar() {
     WEBPATH2="$WEBPATH"
   fi
   TEXT2="$1"
-    if [ -z "$1"             ]; then TEXT2="MDIT $VERSION - [$NAME]$WEBPATH2$LICENCETEXT";fi
-    if [    "$1" = "loading" ]; then TEXT2="MDIT $VERSION - [...] [$NAME]$WEBPATH2$LICENCETEXT";fi
-    if [    "$1" = "error"   ]; then TEXT2="MDIT $VERSION - [!!!] [$NAME]$WEBPATH2$LICENCETEXT";fi
+    if [ -z "$1"             ]; then TEXT2="MDIT v$VERSION - [$NAME]$WEBPATH2$LICENCETEXT";fi
+    if [    "$1" = "loading" ]; then TEXT2="MDIT v$VERSION - [...] [$NAME]$WEBPATH2$LICENCETEXT";fi
+    if [    "$1" = "error"   ]; then TEXT2="MDIT v$VERSION - [!!!] [$NAME]$WEBPATH2$LICENCETEXT";fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="MDIT v$VERSION - [$NAME]$WEBPATH2";fi
+    if [    "$1" = "loading" ]; then TEXT2="MDIT v$VERSION - [...] [$NAME]$WEBPATH2";fi
+    if [    "$1" = "error"   ]; then TEXT2="MDIT v$VERSION - [!!!] [$NAME]$WEBPATH2";fi
+  fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="MDIT - [$NAME]$WEBPATH2";fi
+    if [    "$1" = "loading" ]; then TEXT2="MDIT - [...] [$NAME]$WEBPATH2";fi
+    if [    "$1" = "error"   ]; then TEXT2="MDIT - [!!!] [$NAME]$WEBPATH2";fi
+  fi
   if [ "${#TEXT2}" -ge "$WIDTH" ]; then
     if [ -z "$1"             ]; then TEXT2="MDIT - wiki$WEBPATH2";fi
     if [    "$1" = "loading" ]; then TEXT2="MDIT - [...] wiki$WEBPATH2";fi
@@ -78,7 +88,7 @@ topbar() {
   fi
   if [ "${#TEXT2}" -ge "$WIDTH" ]; then
     if [ -z "$1"             ]; then TEXT2="wiki$WEBPATH2";fi
-    if [    "$1" = "loading" ]; then TEXT2="wiki$WEBPATH2";fi
+    if [    "$1" = "loading" ]; then TEXT2="load wiki$WEBPATH2";fi
     if [    "$1" = "error"   ]; then TEXT2="err wiki$WEBPATH2";fi
   fi
   if [ "${#TEXT2}" -ge "$WIDTH" ]; then
@@ -92,9 +102,29 @@ topbar() {
     if [    "$1" = "error"   ]; then TEXT2="err";fi
   fi
   if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="MDIT";fi
+    if [    "$1" = "loading" ]; then TEXT2="MDIT";fi
+    if [    "$1" = "error"   ]; then TEXT2="err ";fi
+  fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="   ";fi
+    if [    "$1" = "loading" ]; then TEXT2="...";fi
+    if [    "$1" = "error"   ]; then TEXT2="!!!";fi
+  fi 
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="  ";fi
+    if [    "$1" = "loading" ]; then TEXT2="..";fi
+    if [    "$1" = "error"   ]; then TEXT2="!!";fi
+  fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2=" ";fi
+    if [    "$1" = "loading" ]; then TEXT2=".";fi
+    if [    "$1" = "error"   ]; then TEXT2="!";fi
+  fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
     clear
     tput rmcup
-    echo "Terminal must have ${#TEXT2} columns!"
+    echo "Terminal must have an amount of columns!"
     exit 1
   fi
   PAD=$((WIDTH - ${#TEXT2}))
@@ -147,7 +177,10 @@ if [ "${#TEXT}" -ge "$WIDTH" ]; then
                                         TEXT="type path: "
 fi
 if [ "${#TEXT}" -ge "$WIDTH" ]; then
-                                        TEXT="^C exit "
+                                        TEXT="path: "
+fi
+if [ "${#TEXT}" -ge "$WIDTH" ]; then
+                                        TEXT=": "
 fi
 if [ "${#TEXT}" -ge "$WIDTH" ]; then
                                         TEXT=""
