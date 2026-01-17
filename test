@@ -1,8 +1,0 @@
-#!/bin/bash
-trap 'echo "Caught SIGQUIT (^\)"; exit 1' SIGQUIT
-
-echo "Press Ctrl+\\"
-while :; do
-    sleep 1
-done
-
