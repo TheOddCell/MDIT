@@ -2,10 +2,11 @@
 # MarkDownIum Terminal client (MDIT)
 # this code is MIT licenced
 # by TheOddCell
+VERSION=1.0.0
 
 # WebPath and URL parsing
 set -o pipefail
-trap 'printf "\033[0m";clear;exec $0 sidebar' INT
+trap 'clear;tput rmcup; exit 0' INT
 trap 'printf "\033[0m";clear;exec $0 $WEBPATH --automore' TSTP
 tput smcup
 clear
@@ -67,9 +68,35 @@ topbar() {
     WEBPATH2="$WEBPATH"
   fi
   TEXT2="$1"
-  if [ -z "$1"             ]; then TEXT2="MDIT - [+OK] - [$NAME]$WEBPATH2$LICENCETEXT";fi
-  if [    "$1" = "loading" ]; then TEXT2="MDIT - [...] - [$NAME]$WEBPATH2$LICENCETEXT";fi
-  if [    "$1" = "error"   ]; then TEXT2="MDIT - [!!!] - [$NAME]$WEBPATH2$LICENCETEXT";fi
+    if [ -z "$1"             ]; then TEXT2="MDIT $VERSION - [$NAME]$WEBPATH2$LICENCETEXT";fi
+    if [    "$1" = "loading" ]; then TEXT2="MDIT $VERSION - [...] [$NAME]$WEBPATH2$LICENCETEXT";fi
+    if [    "$1" = "error"   ]; then TEXT2="MDIT $VERSION - [!!!] [$NAME]$WEBPATH2$LICENCETEXT";fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="MDIT - wiki$WEBPATH2";fi
+    if [    "$1" = "loading" ]; then TEXT2="MDIT - [...] wiki$WEBPATH2";fi
+    if [    "$1" = "error"   ]; then TEXT2="MDIT - [!!!] wiki$WEBPATH2";fi
+  fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="wiki$WEBPATH2";fi
+    if [    "$1" = "loading" ]; then TEXT2="wiki$WEBPATH2";fi
+    if [    "$1" = "error"   ]; then TEXT2="err wiki$WEBPATH2";fi
+  fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="$WEBPATH2";fi
+    if [    "$1" = "loading" ]; then TEXT2="$WEBPATH2";fi
+    if [    "$1" = "error"   ]; then TEXT2="err $WEBPATH2";fi
+  fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    if [ -z "$1"             ]; then TEXT2="$WEBPATH2";fi
+    if [    "$1" = "loading" ]; then TEXT2="$WEBPATH2";fi
+    if [    "$1" = "error"   ]; then TEXT2="err";fi
+  fi
+  if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+    clear
+    tput rmcup
+    echo "Terminal must have ${#TEXT2} columns!"
+    exit 1
+  fi
   PAD=$((WIDTH - ${#TEXT2}))
   printf "\033[H\033[${BG}m\033[1;${FG}m%s%${PAD}s\033[0m\n" "$TEXT2" ""
 }
@@ -106,20 +133,24 @@ curl -fsSL "$URL/$WEBPATH.md"|format_text|moreable "$2"
 if [ "$?" != "0" ]; then topbar error; fi
 # help bar
 printf "\033[${HEIGHT};1H"
-  TEXT="^C sidebar ^D reload ^C^C exit            , or type path:"
-if command -v most >/dev/null; then
-  TEXT="^C sidebar ^D reload ^C^C exit ^Z use most, or type path:"
-elif command -v less >/dev/null; then
-  TEXT="^C sidebar ^D reload ^C^C exit ^Z use less, or type path:"
+                                        TEXT="^C exit ^D sidebar,             or type path: "
+    if command -v most >/dev/null; then TEXT="^C exit ^D sidebar ^Z use most, or type path: "
+  elif command -v less >/dev/null; then TEXT="^C exit ^D sidebar ^Z use less, or type path: "
 fi
-if [ "$WEBPATH" = "/sidebar" ]; then 
-  trap 'clear;tput rmcup; exit 0' INT
-    TEXT="^C exit    ^D reload                      , or type path:"
-  if command -v most >/dev/null; then
-    TEXT="^C exit    ^D reload           ^Z use most, or type path:"
-  elif command -v less >/dev/null; then
-    TEXT="^C exit    ^D reload           ^Z use less, or type path:"
-  fi
+if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+                                        TEXT="^C exit ^D sidebar, or type path: "
+fi
+if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+                                        TEXT="^C exit or type path: "
+fi
+if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+                                        TEXT="type path: "
+fi
+if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+                                        TEXT="^C exit "
+fi
+if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+                                        TEXT=""
 fi
 PAD=$((WIDTH - ${#TEXT}))
 LENGTH=$((${#TEXT} + 2))
@@ -132,4 +163,4 @@ clear
 if [ -n "$input" ]; then
   exec $0 "$input"
 fi
-exec $0 "$WEBPATH"
+exec $0 "/sidebar"
