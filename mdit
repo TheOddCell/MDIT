@@ -2,7 +2,7 @@
 # MarkDownIum Terminal client (MDIT)
 # this code is MIT licenced
 # by TheOddCell
-VERSION=1.0.0
+VERSION=1.0.1
 
 # WebPath and URL parsing
 set -o pipefail
@@ -137,19 +137,19 @@ printf "\033[${HEIGHT};1H"
     if command -v most >/dev/null; then TEXT="^C exit ^D sidebar ^Z use most, or type path: "
   elif command -v less >/dev/null; then TEXT="^C exit ^D sidebar ^Z use less, or type path: "
 fi
-if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+if [ "${#TEXT}" -ge "$WIDTH" ]; then
                                         TEXT="^C exit ^D sidebar, or type path: "
 fi
-if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+if [ "${#TEXT}" -ge "$WIDTH" ]; then
                                         TEXT="^C exit or type path: "
 fi
-if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+if [ "${#TEXT}" -ge "$WIDTH" ]; then
                                         TEXT="type path: "
 fi
-if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+if [ "${#TEXT}" -ge "$WIDTH" ]; then
                                         TEXT="^C exit "
 fi
-if [ "${#TEXT2}" -ge "$WIDTH" ]; then
+if [ "${#TEXT}" -ge "$WIDTH" ]; then
                                         TEXT=""
 fi
 PAD=$((WIDTH - ${#TEXT}))
