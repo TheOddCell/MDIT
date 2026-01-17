@@ -1,0 +1,83 @@
+#!/bin/bash
+# MarkDownIum Terminal client (MDIT) shell
+# this code is MIT licenced
+# by TheOddCell
+VERSION=2.0.0
+
+# WebPath and URL parsing
+set -o pipefail
+trap 'exit 0' INT
+trap 'echo;exec $0 /sidebar --continue' TSTP
+WEBPATH="$1"
+: "${WEBPATH:=home}"
+if [ "$WEBPATH" == "/" ]; then
+  WEBPATH="/home"
+fi
+case "$WEBPATH" in
+  http://*|https://*)
+    xdg-open "$WEBPATH"
+    WEBPATH="/home"
+    ;;
+  /*)
+    ;;
+  *)
+    WEBPATH="/$WEBPATH"
+    ;;
+esac
+# config.json
+: "${CONFIGDOTJSON:=https://wiki.obsidianos.xyz/config.json}"
+URL="$(curl -fsSL $CONFIGDOTJSON | jq -r '.baseUrl')"
+LOGO="$(curl -fsSL $CONFIGDOTJSON | jq -r '.logo')"
+NAME="$(curl -fsSL $CONFIGDOTJSON | jq -r '.siteName')"
+LICENCE="$(curl -fsSL $CONFIGDOTJSON | jq -r '.licenseBadge')"
+# styling
+format_text() {
+  sed -E '
+  # Replace %GAP% with |
+  s/%GAP%/|/g
+
+  # Markdown links: [text](url) -> text [url], no color
+  s/\[([^]]*)\]\(([^)]*)\)/\1 [\2]/g
+
+  # Headers: #, ##, ###, #### -> yellow
+  s/^(#{1,4}) (.*)/\x1b[33m\2\x1b[0m/
+
+  # Quote line: "> " to "| "
+  s/^> /| /
+
+  # Bold: **text** (does not clear color)
+  s/\*\*([^*]+)\*\*/\x1b[1m\1\x1b[22m/g
+
+  # Italic: *text* (does not clear color)
+  s/\*([^*]+)\*/\x1b[3m\1\x1b[23m/g
+
+  # Inline code: `text` -> grey bg, white text
+  s/`([^`]+)`/\x1b[100;97m\1\x1b[0m/g
+  '
+}
+# rendering
+moreable() {
+  if command -v more >/dev/null; then more
+  else                                 cat
+  fi
+}
+if [ "$2" != "--continue" ]; then
+  LICENCETEXT="$(printf '%s\n' "$LICENCE" \
+    | sed -n 's/.*alt="\([^"]*\)".*/ - \1/p')"
+  printf "$NAME$LICENCETEXT | "
+  curl -fsSL "$URL/top.md"|format_text
+  echo "Welcome to MDITsh $VERSION! Type in the path."
+  echo "^C exit ^Z open sidebar ^D reload"
+else
+  curl -fsSL "$URL/$WEBPATH.md"|format_text|moreable
+fi
+# input parsing
+printf -- "-> "
+read input
+printf "\033[0m"
+if [ -n "$input" ]; then
+  exec $0 "$input" --continue
+else
+  echo
+  exec $0 "$WEBPATH" --continue
+fi
