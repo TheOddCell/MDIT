@@ -2,7 +2,7 @@
 # MarkDownIum Terminal client (MDIT)
 # this code is MIT licenced
 # by TheOddCell
-VERSION=2.0.0
+VERSION=2.0.1
 
 # WebPath and URL parsing
 set -o pipefail

@@ -2,11 +2,11 @@
 # MarkDownIum Terminal client (MDIT) shell
 # this code is MIT licenced
 # by TheOddCell
-VERSION=2.0.0
+VERSION=2.0.1
 
 # WebPath and URL parsing
 set -o pipefail
-trap 'exit 0' INT
+trap 'printf "\rBye! \n";exit 0' INT
 trap 'echo;exec $0 /sidebar --continue' TSTP
 WEBPATH="$1"
 : "${WEBPATH:=home}"
@@ -24,8 +24,13 @@ case "$WEBPATH" in
     WEBPATH="/$WEBPATH"
     ;;
 esac
-# config.json
+
 : "${CONFIGDOTJSON:=https://wiki.obsidianos.xyz/config.json}"
+if [ "$2" != "--continue" ]; then
+  echo "Welcome to MDITsh $VERSION! Type in the path."
+  echo "^C exit ^Z open sidebar ^D reload"
+  printf "Connecting to $CONFIGDOTJSON...\r"
+fi
 URL="$(curl -fsSL $CONFIGDOTJSON | jq -r '.baseUrl')"
 LOGO="$(curl -fsSL $CONFIGDOTJSON | jq -r '.logo')"
 NAME="$(curl -fsSL $CONFIGDOTJSON | jq -r '.siteName')"
@@ -66,18 +71,19 @@ if [ "$2" != "--continue" ]; then
     | sed -n 's/.*alt="\([^"]*\)".*/ - \1/p')"
   printf "$NAME$LICENCETEXT | "
   curl -fsSL "$URL/top.md"|format_text
-  echo "Welcome to MDITsh $VERSION! Type in the path."
-  echo "^C exit ^Z open sidebar ^D reload"
 else
   curl -fsSL "$URL/$WEBPATH.md"|format_text|moreable
 fi
 # input parsing
 printf -- "-> "
 read input
-printf "\033[0m"
 if [ -n "$input" ]; then
   exec $0 "$input" --continue
 else
-  echo
+  if [ "$WEBPATH" == "/home" ]; then
+    echo "/"
+  else
+    echo "$WEBPATH"
+  fi
   exec $0 "$WEBPATH" --continue
 fi
