@@ -2,10 +2,40 @@
 # MarkDownIum Terminal client (MDIT) shell
 # this code is MIT licenced
 # by TheOddCell
-VERSION=2.0.1
+VERSION=3.0.0
 
 # WebPath and URL parsing
 set -o pipefail
+sigusr1() {
+  printf "\nMDIT $VERSION info"
+  printf "\nWEBPATH=%s\n" "$WEBPATH"
+  printf "PID=%s\n" "$$\n"
+  printf "argv0=%s\n" "$0"
+  printf "Thanks for using MDIT!\n"
+  printf "\n"
+}
+if [ -z "$MDITXTRACE" ]; then
+  export MDITXTRACE="false"
+fi
+applyxtrace() {
+  if $MDITXTRACE; then
+    set -o xtrace
+  else
+    set +o xtrace
+  fi
+}
+sigusr2() {
+  if $MDITXTRACE; then
+    export MDITXTRACE="false"
+    applyxtrace
+  else
+    export MDITXTRACE="true"
+    applyxtrace
+  fi
+}
+trap 'sigusr1' USR1
+trap 'sigusr2' USR2
+applyxtrace
 trap 'printf "\rBye! \n";exit 0' INT
 trap 'printf "\r-> /sidebar \n";exec $0 /sidebar --continue' TSTP
 trap 'printf "\r-<topbar \n";exec $0 $WEBPATH --othercontinue' SIGQUIT
